@@ -1,5 +1,7 @@
 # Simple User Journey - New Authorization Model (Phase 1)
 
+> **⚠️ VERIFICATION NEEDED**: Kong's exact role, positioning in request flow, and SSL/TLS handling need verification. Known issue: x.509 certificate validation in SSL handshake. This diagram shows assumed Kong behavior.
+
 ## Overview
 
 This diagram shows a single user journey through the new simplified authorization model, focusing on Phase 1 implementation. The flow demonstrates how a user moves from login through role assignment to service access.

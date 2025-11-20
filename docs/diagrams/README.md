@@ -70,12 +70,49 @@ Shows the complete user journey through the new simplified authorization model:
 
 **Key Design**: Direct service-level mapping with single business role per user context. Simplified and secure.
 
+### 2. Business Role Hierarchy (`role-hierarchy.md`) - **Architecture Blueprint**
+
+Shows the hierarchical organization of business roles and user groups:
+- Three user groups: External Users, Internal Users, Services
+- Four business roles: User, Manager, Admin, Service
+- Role escalation paths and inheritance patterns
+- Role definitions and capabilities
+- Concrete assignment examples
+- Group-to-role mapping rules
+
+**Key Design**: Clear organizational structure with single role per user context. Group membership determines assignable roles.
+
+### 3. Permission Resolution Flow (`permission-resolution.md`) - **Decision Logic**
+
+Shows how role-based access decisions are made at the service level:
+- Token extraction and validation
+- Role extraction from JWT claims
+- Service-level permission decisions
+- Allow/deny decision points with examples
+- Role-to-service access matrix
+- Phase 1 vs Phase 2 comparison
+
+**Key Design**: Service-level checks with clear decision flow. Phase 1 focuses on service granularity; Phase 2 adds controller-level rules.
+
+### 4. JWT Token Structure (`keycloak-token-structure.md`) - **Implementation Detail**
+
+Shows the significant simplification in token structure between old and new models:
+- Current state: Bloated tokens with 14+ service roles
+- Target state: Simplified tokens with 1 business role
+- 85% token size reduction
+- Keycloak configuration changes
+- Spring Security extraction logic
+- Network and performance benefits
+
+**Key Design**: Cleaner tokens = cleaner permissions. Target tokens are 6x smaller with better security posture.
+
 ### Future Diagrams (Phase 2+)
 
-Additional diagrams will show the improved authentication architecture addressing identified problems, including:
+Additional diagrams will show enhanced authentication features:
 - Controller-level permission granularity
-- More complex role hierarchies
+- Attribute-based access control (ABAC) rules
 - Fine-grained endpoint-level access control
+- Time-based and context-aware authorization
 
 ## Usage
 

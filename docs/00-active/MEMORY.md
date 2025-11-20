@@ -104,6 +104,138 @@
 
 ---
 
+### MEM-004: Groups Assign Roles Pattern
+**Date**: 2025-11-20
+**Status**: ACCEPTED
+**Deciders**: James + orchestrator
+**Category**: [ARCHITECTURE]
+
+**Decision**: Use "groups assign business roles" pattern for Keycloak authorization model
+
+**Context**:
+- Need to determine relationship between groups (External/Internal/Services) and business roles (User/Manager/Admin)
+- Current broken state: Group A/B assign dozens of service roles with no business role mapping
+- Target state: Meaningful groups with business role assignments
+
+**Consequences**:
+- ✅ **Positive**: Clear ownership and auditability, least privilege by default, simple to understand
+- ✅ **Positive**: External Users can only be User role (reduces risk), Internal Users have flexibility
+- ⚠️ **Negative**: Less flexible than separate dimensions (can't be External + Manager)
+- 🔧 **Mitigation**: Business requirements fit this model (External users are customers, not managers)
+
+**Alternatives Considered**:
+1. **Separate dimensions**: Users independently assigned groups AND roles - too complex, harder to audit
+2. **Nested hierarchy**: External Users can only be User, Internal Users only Manager/Admin - too rigid
+3. **Roles-only (no groups)**: Every user directly assigned roles - loses organizational grouping benefits
+
+**Related**:
+- Design doc: `docs/authentication/03-target-design/group-role-mapping.md`
+- Session journal: `docs/00-active/journal/session-02.md`
+
+---
+
+### MEM-005: Phased Authorization Granularity
+**Date**: 2025-11-20
+**Status**: ACCEPTED
+**Deciders**: James + orchestrator
+**Category**: [ARCHITECTURE]
+
+**Decision**: Phase 1 implements service-level access only; Phase 2 adds controller-level granularity later
+
+**Context**:
+- Need to balance simplicity with future flexibility
+- Service-level access: Business role grants access to entire microservice (simple)
+- Controller-level access: Business role + permissions grant access to specific endpoints (granular)
+
+**Consequences**:
+- ✅ **Positive**: Phase 1 solves 80% of over-permissioning problem with 20% complexity
+- ✅ **Positive**: Reduces migration timeline and scope
+- ✅ **Positive**: Phase 2 can build on Phase 1 foundation (non-breaking)
+- ⚠️ **Negative**: Temporary lack of endpoint-level granularity
+- 🔧 **Mitigation**: Service-level access still enforces meaningful boundaries (User vs Manager vs Admin)
+
+**Phase 1**: Manager role → access to reports-service (all endpoints)
+**Phase 2**: Manager role + "reports:read" permission → GET /reports (specific endpoint)
+
+**Related**:
+- Simple design: `docs/authentication/03-target-design/simple-workflow-overview.md`
+- Session journal: `docs/00-active/journal/session-02.md`
+
+---
+
+### MEM-006: 30-Week Phased Migration Strategy
+**Date**: 2025-11-20
+**Status**: ACCEPTED
+**Deciders**: orchestrator
+**Category**: [PROCESS]
+
+**Decision**: 6-phase migration over 30 weeks with dual-mode operation supporting both old and new authorization models
+
+**Context**:
+- Zero downtime requirement for 15+ microservices
+- Cannot "big bang" switch from Group A/B to new model
+- Need rollback capability at every phase
+- Users and services must migrate independently
+
+**Implementation**:
+- **Phase 0** (2 weeks): Pre-migration prep (audit, mapping, test environments)
+- **Phase 1** (2 weeks): Keycloak setup (create groups, roles, token mappers)
+- **Phase 2** (8 weeks): Dual-mode deployment (services accept both old and new auth)
+- **Phase 3** (8 weeks): User migration (move users to new groups, add business roles to tokens)
+- **Phase 4** (8 weeks): Service migration (remove old auth checks, Keycloak-only)
+- **Phase 5** (2 weeks): Cleanup (remove Group A/B, reduce token size)
+
+**Success Metrics**:
+- Zero downtime throughout migration
+- <1% authorization error rate
+- 85% token size reduction (Phase 5)
+- All 15+ services migrated successfully
+
+**Rollback Plan**:
+- Phases 2-3: <30 minutes (feature flag disable)
+- Phase 4: 2-4 hours (redeploy dual-mode code)
+- Phase 5: 1-3 days (restore from backup - delayed until 4+ weeks stable)
+
+**Related**:
+- Migration plan: `docs/authentication/04-migration-plan/migration-phases.md`
+- Rollback strategy: `docs/authentication/04-migration-plan/rollback-strategy.md`
+- Session journal: `docs/00-active/journal/session-02.md`
+
+---
+
+### MEM-007: Kong Architecture Verification Deferred
+**Date**: 2025-11-20
+**Status**: ACCEPTED
+**Deciders**: orchestrator + James
+**Category**: [CONSTRAINTS]
+
+**Decision**: Flag Kong's exact role for verification; continue with documentation work that doesn't depend on Kong specifics
+
+**Context**:
+- James indicated Kong does "some" of what diagrams show, not everything
+- Request flow position unclear (Kong before React UI?)
+- SSL/TLS handling and x.509 certificate validation issues noted
+- Exact capabilities uncertain: routing, token validation, role-based authz?
+
+**Consequences**:
+- ✅ **Positive**: Maintains momentum on documentation work
+- ✅ **Positive**: Transparent about assumptions (verification notes on all diagrams)
+- ⚠️ **Negative**: Issue #3 (spike findings) incomplete until Kong verified
+- 🔧 **Mitigation**: All diagrams flagged with verification warnings, revisit when James available
+
+**Verification Needed**:
+- Kong's exact position in request flow
+- What Kong does: routing, validation, authorization
+- SSL/TLS termination and x.509 certificate handling
+- Integration points with Keycloak and microservices
+
+**Related**:
+- Diagrams with notes: `docs/diagrams/current-state/current-auth-flow.md`
+- Session journal: `docs/00-active/journal/session-02.md`
+- Issue #3: https://github.com/shayesdevel/james-project/issues/3 (blocked on Kong verification)
+
+---
+
 ## Decision Status Definitions
 
 **PROPOSED**: Decision suggested but not yet accepted
@@ -129,9 +261,13 @@ Tag decisions with categories for easier navigation:
 
 | ID | Date | Title | Status | Category |
 |----|------|-------|--------|----------|
-| MEM-001 | 2025-11-20 | Framework Selection | ACCEPTED | [ARCHITECTURE] |
-| MEM-002 | 2025-11-20 | Agent Roster (Documentation-Focused) | ACCEPTED | [ARCHITECTURE] |
+| MEM-007 | 2025-11-20 | Kong Architecture Verification Deferred | ACCEPTED | [CONSTRAINTS] |
+| MEM-006 | 2025-11-20 | 30-Week Phased Migration Strategy | ACCEPTED | [PROCESS] |
+| MEM-005 | 2025-11-20 | Phased Authorization Granularity | ACCEPTED | [ARCHITECTURE] |
+| MEM-004 | 2025-11-20 | Groups Assign Roles Pattern | ACCEPTED | [ARCHITECTURE] |
 | MEM-003 | 2025-11-20 | No Worktree Isolation | ACCEPTED | [PROCESS] |
+| MEM-002 | 2025-11-20 | Agent Roster (Documentation-Focused) | ACCEPTED | [ARCHITECTURE] |
+| MEM-001 | 2025-11-20 | Framework Selection | ACCEPTED | [ARCHITECTURE] |
 
 ---
 
@@ -260,7 +396,18 @@ Moved to ARCHITECTURE.md:
 
 ## Changelog
 
-**2025-11-20**: Project initialized with cognitive-framework v2.2
+**2025-11-20 (Session 02)**: Authentication redesign spike completed
+- Created MEM-004: Groups Assign Roles Pattern
+- Created MEM-005: Phased Authorization Granularity (Phase 1 simple, Phase 2 granular)
+- Created MEM-006: 30-Week Phased Migration Strategy
+- Created MEM-007: Kong Architecture Verification Deferred
+- Documented current broken state (Group A/B over-permissioning)
+- Designed Phase 1 target model (External/Internal/Services groups → User/Manager/Admin roles)
+- Created 6-phase migration plan with dual-mode operation
+- Created 18 documentation files and 7 Mermaid diagrams
+- GitHub issues #1, #2, #4, #5, #6 completed; #3 pending Kong verification
+
+**2025-11-20 (Session 01)**: Project initialized with cognitive-framework v2.2
 - Created MEM-001: Framework Selection
 - Created MEM-002: Agent Roster (Documentation-Focused)
 - Created MEM-003: No Worktree Isolation

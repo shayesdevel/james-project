@@ -1,5 +1,7 @@
 # Current Authentication Flow (Broken State)
 
+> **⚠️ VERIFICATION NEEDED**: Kong's exact role, positioning, and capabilities need verification. Current diagram shows assumptions about Kong's authorization checks and SSL/TLS handling that may not match production reality. Known issue: x.509 certificate validation in SSL handshake.
+
 ## Overview
 
 This diagram illustrates the current authentication and authorization flow in the james-project system. The flow demonstrates how users are authenticated via Keycloak, assigned to groups, given roles, and how those roles are validated across Kong and the microservices.

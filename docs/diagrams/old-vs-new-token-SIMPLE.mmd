@@ -1,0 +1,13 @@
+flowchart LR
+    subgraph Old[OLD TOKEN - 3.5 KB]
+        OldContent["Group A or B<br/>+ 14+ service roles<br/>= HUGE TOKEN"]
+    end
+
+    subgraph New[NEW TOKEN - 600 bytes]
+        NewContent["Group: Internal Users<br/>+ Role: Manager<br/>= TINY TOKEN"]
+    end
+
+    Old -.->|85% smaller| New
+
+    style Old fill:#ffcccc
+    style New fill:#ccffcc

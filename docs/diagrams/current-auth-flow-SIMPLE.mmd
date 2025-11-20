@@ -1,0 +1,12 @@
+flowchart LR
+    User[User] --> UI[React UI]
+    UI --> KC[Keycloak Login]
+    KC --> Token[Get JWT Token<br/>HUGE - dozens of roles]
+    Token --> Kong[Kong Gateway]
+    Kong --> Service[Microservice]
+    Service --> Check{Has Role?}
+    Check -->|Yes| Allow[Allow]
+    Check -->|No| Deny[Deny]
+
+    style Token fill:#ffcccc
+    style Check fill:#fff3cd

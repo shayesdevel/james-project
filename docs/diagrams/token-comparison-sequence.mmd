@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant KC as Keycloak
+    participant Old as OLD Token (3.5 KB)
+    participant New as NEW Token (600 B)
+    participant Service as Microservice
+
+    Note over KC,Service: SAME USER: "Jane - Product Manager"
+
+    rect rgb(255, 200, 200)
+        Note over KC,Old: OLD MODEL (Group A/B)
+        KC->>Old: Generate token
+        Note over Old: groups: ["Group A"]<br/>roles: [<br/>"order-service",<br/>"inventory-service",<br/>"shipping-service",<br/>"reports-service",<br/>"analytics-service",<br/>"admin-service",<br/>"billing-service",<br/>"customer-service",<br/>"warehouse-service",<br/>"...(14 total)"<br/>]<br/>Size: 3,500 bytes
+        Old->>Service: Send HUGE token
+        Service->>Service: Check for "reports-service" role
+        Service->>Service: ✅ Found - grant access
+        Note over Service: Problem: Jane also has<br/>admin-service, billing-service<br/>she shouldn't have!
+    end
+
+    rect rgb(200, 255, 200)
+        Note over KC,New: NEW MODEL (Meaningful Groups)
+        KC->>New: Generate token
+        Note over New: groups: ["Internal Users"]<br/>roles: ["Manager"]<br/>Size: 600 bytes
+        New->>Service: Send TINY token
+        Service->>Service: Check for "Manager" role
+        Service->>Service: ✅ Found - grant access
+        Note over Service: Fixed: Jane has ONLY<br/>Manager role - no extra perms!
+    end
+
+    Note over KC,Service: 85% SIZE REDUCTION<br/>Same access, way less bloat

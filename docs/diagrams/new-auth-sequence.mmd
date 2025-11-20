@@ -1,0 +1,53 @@
+sequenceDiagram
+    actor User
+    participant UI as React UI
+    participant Kong as Kong Gateway
+    participant KC as Keycloak
+    participant Service as Microservice
+
+    User->>UI: Login
+    UI->>KC: Redirect to /auth
+    KC->>KC: Show login form
+    User->>KC: Enter credentials
+
+    KC->>KC: Authenticate user
+    KC->>KC: Determine group membership
+
+    Note over KC: Meaningful Groups:<br/>- External Users (customers)<br/>- Internal Users (employees)<br/>- Services (machine accounts)
+
+    alt External User
+        KC->>KC: Assign "User" role
+    else Internal User
+        KC->>KC: Assign "User" or "Manager" or "Admin"
+    else Service Account
+        KC->>KC: Assign "Service" role
+    end
+
+    KC->>UI: Return JWT token (600 bytes)
+    Note over KC,UI: Token contains:<br/>- Group: Internal Users<br/>- Business Role: Manager<br/>- Clean and small!
+
+    UI->>UI: Store token in localStorage
+
+    User->>UI: Request data from service
+    UI->>Kong: GET /api/orders<br/>Authorization: Bearer [token]
+
+    Kong->>Kong: Validate JWT signature
+    Kong->>Kong: Extract business role
+
+    Kong->>Service: Forward request + token
+
+    Service->>Service: Extract business role from JWT
+    Service->>Service: Check: Does Manager role<br/>have access to this service?
+
+    Note over Service: Phase 1: Service-level check<br/>Phase 2: Controller-level check (future)
+
+    alt Has required business role
+        Service->>Service: Execute business logic
+        Service->>UI: 200 OK + data
+        UI->>User: Show data
+    else Missing required role
+        Service->>UI: 403 Forbidden
+        UI->>User: Access denied
+    end
+
+    Note over User,Service: FIXED:<br/>✅ Business roles in Keycloak<br/>✅ 85% smaller token<br/>✅ Meaningful permissions

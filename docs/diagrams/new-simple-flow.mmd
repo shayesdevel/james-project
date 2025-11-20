@@ -1,0 +1,14 @@
+flowchart LR
+    User[User] --> UI[React UI]
+    UI --> KC[Keycloak Login]
+    KC --> Group[Group:<br/>External/Internal/Services]
+    Group --> Role[Business Role:<br/>User/Manager/Admin]
+    Role --> Token[Small JWT Token<br/>ONE role]
+    Token --> Kong[Kong Gateway]
+    Kong --> Service[Microservice]
+    Service --> Check{Has Business Role?}
+    Check -->|Yes| Allow[Allow]
+    Check -->|No| Deny[Deny]
+
+    style Token fill:#90ee90
+    style Role fill:#add8e6

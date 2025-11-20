@@ -1,0 +1,46 @@
+sequenceDiagram
+    actor User
+    participant UI as React UI
+    participant Kong as Kong Gateway
+    participant KC as Keycloak
+    participant Service as Microservice
+    participant DB as App Database
+
+    User->>UI: Login
+    UI->>KC: Redirect to /auth
+    KC->>KC: Show login form
+    User->>KC: Enter credentials
+
+    KC->>KC: Authenticate user
+    KC->>KC: Assign to Group A or Group B
+
+    Note over KC: Problem: Group A/B are meaningless<br/>Both inherit DOZENS of service roles
+
+    KC->>UI: Return JWT token (3.5 KB!)
+    Note over KC,UI: Token contains:<br/>- Group A or B<br/>- 14+ service roles<br/>- No business roles
+
+    UI->>UI: Store token in localStorage
+
+    User->>UI: Request data from service
+    UI->>Kong: GET /api/orders<br/>Authorization: Bearer [token]
+
+    Kong->>Kong: Validate JWT signature
+    Kong->>Kong: Check scopes/roles
+
+    Kong->>Service: Forward request + token
+
+    Service->>Service: Extract roles from JWT
+    Service->>DB: Check business role from database
+
+    Note over Service,DB: Problem: Business roles (User/Manager/Admin)<br/>stored in DB, NOT in Keycloak!
+
+    alt Has service role in token
+        Service->>Service: Binary check: role present?
+        Service->>UI: 200 OK + data
+        UI->>User: Show data
+    else Missing service role
+        Service->>UI: 403 Forbidden
+        UI->>User: Access denied
+    end
+
+    Note over User,DB: CATASTROPHIC OVER-PERMISSIONING:<br/>User gets 15+ service roles from one group assignment

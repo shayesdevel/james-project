@@ -1,0 +1,7 @@
+flowchart TD
+    User[New User Created]
+    User --> GroupAB[Assigned to Group A or B]
+    GroupAB --> Roles[Gets DOZENS of service roles]
+    Roles --> Problem[User has access to<br/>15+ services they<br/>shouldn't use]
+
+    style Problem fill:#ff6b6b

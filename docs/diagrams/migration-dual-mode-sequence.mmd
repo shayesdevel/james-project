@@ -1,0 +1,46 @@
+sequenceDiagram
+    actor User
+    participant UI as React UI
+    participant Kong as Kong Gateway
+    participant KC as Keycloak
+    participant Service as Microservice (Dual-Mode)
+    participant DB as App Database
+
+    Note over User,DB: DUAL-MODE OPERATION<br/>Service accepts BOTH old and new auth
+
+    User->>UI: Login
+    UI->>KC: Redirect to /auth
+    KC->>KC: Authenticate user
+
+    KC->>KC: Assign to BOTH:<br/>- Old group (Group A/B)<br/>- New group (Internal Users)
+
+    KC->>KC: Generate token with:<br/>- Old service roles<br/>- New business role
+
+    KC->>UI: Return JWT (4.5 KB - both models)
+    Note over KC,UI: Transition token contains<br/>BOTH old and new claims
+
+    UI->>Kong: GET /api/orders<br/>Authorization: Bearer [token]
+
+    Kong->>Kong: Validate JWT
+    Kong->>Service: Forward request
+
+    Service->>Service: Check feature flag:<br/>dualMode.enabled = true
+
+    Service->>Service: Try NEW auth first
+    Service->>Service: Extract business role from JWT
+
+    alt New business role found
+        Service->>Service: Check business role permission
+        Note over Service: NEW PATH: Use Keycloak role
+        Service->>UI: 200 OK + data
+    else No business role in token
+        Service->>Service: Fallback to OLD auth
+        Service->>Service: Check service role in JWT
+        Service->>DB: Check business role in database
+        Note over Service,DB: OLD PATH: Use DB role
+        Service->>UI: 200 OK + data
+    end
+
+    UI->>User: Show data
+
+    Note over User,DB: ROLLBACK: Set dualMode.enabled=false<br/>Takes effect in <30 minutes

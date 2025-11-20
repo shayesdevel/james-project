@@ -1,0 +1,66 @@
+{
+  "_comment": "james-project Claude Code settings - validated against official 2025 schema",
+  "_comment_source": "Customized from cognitive-framework/templates/new-project-setup/.claude/settings.json",
+  "_comment_agents": "Agent contexts in .claude/agents/: orchestrator.md, scribe.md, diagram.md",
+  "permissions": {
+    "allow": [],
+    "ask": [],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "env": {
+    "PROJECT_ROOT": "${PWD}",
+    "PROJECT_NAME": "james-project",
+    "FRAMEWORK_ROOT": "${PWD}/../cognitive-framework"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-end.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-tool-use.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-tool-use.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "includeCoAuthoredBy": true
+}

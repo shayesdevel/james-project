@@ -14,7 +14,7 @@
 set -e
 
 echo "=== Session Start ==="
-echo "Project: {YOUR_PROJECT_NAME}"
+echo "Project: james-project"
 echo "Date: $(date)"
 echo ""
 
